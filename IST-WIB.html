@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IST ↔ Jakarta Time Converter</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #141E30, #243B55);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        color: white;
+    }
+
+    .card {
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(12px);
+        padding: 30px;
+        border-radius: 16px;
+        width: 340px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+
+    select, input {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 8px;
+        border: none;
+        font-size: 15px;
+    }
+
+    button {
+        margin-top: 15px;
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: none;
+        background: #00c6ff;
+        color: white;
+        font-size: 15px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    button:hover {
+        background: #0072ff;
+    }
+
+    .result {
+        margin-top: 20px;
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    .info {
+        font-size: 13px;
+        margin-top: 10px;
+        opacity: 0.8;
+    }
+    /* clock styling */
+    .clocks {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    .clock {
+        flex: 1;
+        padding: 10px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 8px;
+    }
+    .clock-label {
+        font-size: 14px;
+        margin-bottom: 5px;
+    }
+    .clock-time {
+        font-size: 24px;
+        font-weight: bold;
+    }</style>
+</head>
+<body>
+
+<div class="card">
+    <h1 id="converterTitle">IST ↔ Jakarta Converter</h1>
+
+    <!-- live clocks -->
+    <div class="clocks">
+        <div class="clock" id="jakartaClock">
+            <div class="clock-label">Jakarta (WIB)</div>
+            <div class="clock-time" id="jakartaTime">--:--:--</div>
+        </div>
+        <div class="clock" id="istClock">
+            <div class="clock-label">India Standard Time</div>
+            <div class="clock-time" id="istTime">--:--:--</div>
+        </div>
+    </div>
+
+    <select id="direction" onchange="updateTitle()">
+        <option value="IST_TO_WIB">IST ➜ Jakarta (WIB)</option>
+        <option value="WIB_TO_IST">Jakarta (WIB) ➜ IST</option>
+    </select>
+
+    <input type="time" id="timeInput">
+
+    <button onclick="convertTime()">Convert</button>
+
+    <div class="result" id="result"></div>
+
+    <div class="info">
+        IST (UTC+5:30) | Jakarta (UTC+7:00) <br>
+        Difference: 1 hour 30 minutes
+    </div>
+</div>
+
+<script>
+function convertTime() {
+    const input = document.getElementById("timeInput").value;
+    const direction = document.getElementById("direction").value;
+    const resultDiv = document.getElementById("result");
+
+    if (!input) {
+        resultDiv.innerText = "Please select a time.";
+        return;
+    }
+
+    let [hours, minutes] = input.split(":").map(Number);
+
+    if (direction === "IST_TO_WIB") {
+        // Add 1h 30m
+        minutes += 30;
+        if (minutes >= 60) {
+            minutes -= 60;
+            hours += 1;
+        }
+        hours += 1;
+        if (hours >= 24) hours -= 24;
+
+        resultDiv.innerText = 
+            "Jakarta Time: " + 
+            String(hours).padStart(2,"0") + ":" + 
+            String(minutes).padStart(2,"0") + " WIB";
+
+    } else {
+        // Subtract 1h 30m
+        minutes -= 30;
+        if (minutes < 0) {
+            minutes += 60;
+            hours -= 1;
+        }
+        hours -= 1;
+        if (hours < 0) hours += 24;
+
+        resultDiv.innerText = 
+            "IST Time: " + 
+            String(hours).padStart(2,"0") + ":" + 
+            String(minutes).padStart(2,"0") + " IST";
+    }
+}
+
+// live clock updater
+function updateClocks() {
+    const now = new Date();
+
+    // Jakarta is UTC+7
+    const jakarta = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
+    document.getElementById("jakartaTime").innerText = jakarta.toLocaleTimeString();
+
+    // IST is UTC+5:30 (Asia/Kolkata)
+    const ist = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+    document.getElementById("istTime").innerText = ist.toLocaleTimeString();
+}
+
+setInterval(updateClocks, 1000);
+updateClocks();
+
+// update header based on dropdown selection
+function updateTitle() {
+    const sel = document.getElementById("direction").value;
+    const title = document.getElementById("converterTitle");
+    if (sel === "IST_TO_WIB") {
+        title.innerText = "IST ➜ Jakarta Converter";
+    } else {
+        title.innerText = "Jakarta ➜ IST Converter";
+    }
+}
+
+// initialize title on load
+updateTitle();
+</script>
+
+</body>
+</html>

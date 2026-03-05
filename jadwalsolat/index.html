@@ -168,7 +168,7 @@ body::before{
 <div class="wrap">
 
   <div class="topbar">
-    <div class="app-title">Sholat</div>
+    <div class="app-title">Jadwal Waktu Sholat</div>
     <div class="controls">
       <button class="ctrl-btn" onclick="toggleNumeral()" title="Ganti numeral">
         <svg viewBox="0 0 20 16" fill="currentColor"><text y="13" font-size="13">١٢</text></svg>
@@ -418,14 +418,22 @@ function onGeoErr(){
 function setLoc(html){document.getElementById('loc').innerHTML=html;}
 
 // ─── HELPERS ───
+function getAllTimes(){
+  // Gabungkan pData + imsak (kalau datanya ada), lalu sort by time
+  let all=[...pData];
+  if(imsakData) all.push(imsakData);
+  return all.slice().sort((a,b)=>a.dt-b.dt);
+}
 function getNext(){
   const now=new Date();
-  return pData.find(p=>p.dt>now)||pData[0];
+  const all=getAllTimes();
+  return all.find(p=>p.dt>now)||all[0];
 }
 function getPrev(){
   const now=new Date();
-  let last=pData[pData.length-1];
-  for(let i=0;i<pData.length;i++) if(now<pData[i].dt) return i===0?last:pData[i-1];
+  const all=getAllTimes();
+  let last=all[all.length-1];
+  for(let i=0;i<all.length;i++) if(now<all[i].dt) return i===0?last:all[i-1];
   return last;
 }
 
@@ -435,16 +443,16 @@ function renderApp(){
   const total=next.dt-prev.dt, elapsed=now-prev.dt;
   const pct=Math.min(100,Math.max(0,(elapsed/total)*100)).toFixed(1);
 
-  // Imsak row — hanya tampil di bulan Ramadan
-  const imsakRow = (isRamadan && imsakData) ? `
-    <div class="p-row imsak-row${imsakData.dt<now?' is-past':''}">
+  // Imsak row — tampil kalau data imsak tersedia
+  const imsakRow = imsakData ? `
+    <div class="p-row imsak-row${imsakData.dt<now&&next.key!=='imsak'?' is-past':''}${next.key==='imsak'?' is-next':''}">
       <span class="p-idx n">·</span>
       <div class="p-info">
         <span class="p-en">${imsakData.name}</span>
         <span class="p-ar">${imsakData.ar}</span>
       </div>
       <span class="p-time n">${toN(imsakData.ts)}</span>
-      <span class="p-dot"></span>
+      <span class="p-dot${next.key==='imsak'?' is-next':''}"></span>
     </div>` : '';
 
   const rows=pData.map((p,i)=>{
@@ -464,7 +472,7 @@ function renderApp(){
 
   document.getElementById('app').innerHTML=`
     <div class="next-card">
-      <div class="next-lbl">Waktu Sholat Berikutnya</div>
+      <div class="next-lbl">${next.key==='imsak'?'Waktu Imsak akan tiba':'Waktu Sholat Berikutnya'}</div>
       <div class="next-row">
         <div>
           <div class="next-name">${next.name}</div>

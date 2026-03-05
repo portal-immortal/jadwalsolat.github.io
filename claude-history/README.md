@@ -2,7 +2,7 @@
 
 > Sebuah web interaktif yang mengeksplorasi sejarah, anatomi desain, dan filosofi di balik logo Claude dari Anthropic.
 
-**🔗 Live Demo:** https://portal-immortal.github.io/
+**🔗 Live Demo:** https://portal-immortal.github.io/claude-history/
 
 ---
 

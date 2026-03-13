@@ -61,6 +61,11 @@
         margin-top: 1.25rem;
         font-size: 1.125rem;
         font-weight: 600;
+        background: rgba(255,255,255,0.1);
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.2);
+        transition: all 0.3s ease;
     }
 
     .info {
@@ -120,12 +125,12 @@
     </div>
 
     <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
-        <select id="fromZone" onchange="updateTitle()">
+        <select id="fromZone" onchange="updateTitle(); convertTime();">
             <option value="IST">India Standard Time (IST)</option>
             <option value="WIB">Jakarta Time (WIB)</option>
             <option value="SGT">Singapore Time (SGT)</option>
         </select>
-        <select id="toZone" onchange="updateTitle()">
+        <select id="toZone" onchange="updateTitle(); convertTime();">
             <option value="WIB">Jakarta Time (WIB)</option>
             <option value="IST">India Standard Time (IST)</option>
             <option value="SGT">Singapore Time (SGT)</option>
@@ -133,8 +138,6 @@
     </div>
 
     <input type="time" id="timeInput">
-
-    <button onclick="convertTime()">Convert</button>
 
     <div class="result" id="result"></div>
 
@@ -157,7 +160,7 @@ function convertTime() {
     const resultDiv = document.getElementById("result");
 
     if (!input) {
-        resultDiv.innerText = "Please select a time.";
+        resultDiv.innerText = "";
         return;
     }
 
@@ -204,6 +207,8 @@ function updateTitle() {
 
 // initialize title on load
 updateTitle();
+
+document.getElementById("timeInput").addEventListener('input', convertTime);
 </script>
 
 </body>

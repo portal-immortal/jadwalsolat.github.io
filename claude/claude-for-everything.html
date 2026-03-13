@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude for Everything</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a08;
+    --bg2: #111110;
+    --bg3: #1a1a17;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.15);
+    --text: #f0efe8;
+    --muted: #888880;
+    --accent: #d4f264;
+    --accent2: #7c6af7;
+    --accent3: #f26464;
+    --font-head: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-head);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* header */
+  header {
+    position: relative;
+    z-index: 1;
+    padding: 80px 48px 60px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-size: clamp(52px, 8vw, 100px);
+    font-weight: 800;
+    line-height: 0.92;
+    letter-spacing: -0.03em;
+    color: var(--text);
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--accent);
+    position: relative;
+  }
+
+  .header-bottom {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 12px;
+  }
+
+  .tagline {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--muted);
+    max-width: 360px;
+    line-height: 1.6;
+  }
+
+  .total-count {
+    font-family: var(--font-mono);
+    font-size: 48px;
+    font-weight: 300;
+    color: var(--border-hover);
+    line-height: 1;
+  }
+
+  /* controls */
+  .controls {
+    position: relative;
+    z-index: 1;
+    padding: 20px 48px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+    max-width: 320px;
+  }
+
+  .search-wrap svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.35;
+  }
+
+  input[type="search"] {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 9px 12px 9px 36px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type="search"]:focus { border-color: var(--border-hover); }
+  input[type="search"]::placeholder { color: var(--muted); }
+
+  .filter-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .pill {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: lowercase;
+  }
+
+  .pill:hover { border-color: var(--border-hover); color: var(--text); }
+
+  .pill.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0a0a08;
+    font-weight: 500;
+  }
+
+  /* grid */
+  main {
+    position: relative;
+    z-index: 1;
+    padding: 40px 48px 80px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .card {
+    background: var(--bg2);
+    padding: 24px 20px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 1px solid transparent;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::after {
+    content: '↗';
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-size: 14px;
+    color: var(--muted);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .card:hover {
+    background: var(--bg3);
+    z-index: 1;
+  }
+
+  .card:hover::after { opacity: 1; }
+
+  .card.special-existential { background: #0e0a1f; }
+  .card.special-existential:hover { background: #13102a; }
+
+  .card.special-info { background: #0a110a; }
+  .card.special-info:hover { background: #0d160d; }
+
+  .card.hidden { display: none; }
+
+  .card-icon {
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .card-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .card.special-existential .card-label { color: #b8a8ff; }
+  .card.special-info .card-label { color: var(--accent); }
+
+  .card-sub {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .card-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    opacity: 0.5;
+  }
+
+  /* empty state */
+  .empty {
+    display: none;
+    padding: 80px 48px;
+    text-align: center;
+    font-family: var(--font-mono);
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* footer */
+  footer {
+    position: relative;
+    z-index: 1;
+    padding: 32px 48px;
+    border-top: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* count badge */
+  .visible-count {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  /* responsive */
+  @media (max-width: 640px) {
+    header, .controls, main, footer { padding-left: 20px; padding-right: 20px; }
+    header { padding-top: 48px; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  }
+
+  /* fade in animation */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card { animation: fadeUp 0.3s ease both; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">claude.ai — use case directory</div>
+  <h1>Claude for<br><em>Everything</em></h1>
+  <div class="header-bottom">
+    <p class="tagline">Every version of Claude you never knew you needed. And a few you definitely don't.</p>
+    <div class="total-count" id="total-count">52</div>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="search-wrap">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="6" cy="6" r="4.5" stroke="white" stroke-width="1.2"/>
+      <line x1="9.5" y1="9.5" x2="13" y2="13" stroke="white" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    <input type="search" id="search" placeholder="search use cases..." autocomplete="off">
+  </div>
+  <div class="filter-pills" id="filters"></div>
+</div>
+
+<main>
+  <div class="visible-count" id="visible-count"></div>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty">no use cases found — try a different search.</div>
+</main>
+
+<footer>
+  <span>claude for everything &mdash; a meme turned real</span>
+  <span>anthropic &copy; 2026</span>
+</footer>
+
+<script>
+const items = [
+  { label: "Excel", icon: "📊", cat: "work", sub: "Formulas, pivots, and VBA you didn't know you needed" },
+  { label: "Code Review", icon: "🔍", cat: "code", sub: "Catch bugs before they catch you" },
+  { label: "Coding", icon: "💻", cat: "code", sub: "From blank file to working thing" },
+  { label: "Debugging", icon: "🐛", cat: "code", sub: "Why. Won't. It. Work." },
+  { label: "Code Security", icon: "🔒", cat: "code", sub: "Spot the vulnerabilities before someone else does" },
+  { label: "Cooking", icon: "🍳", cat: "life", sub: "Recipes that actually work at home" },
+  { label: "Writing", icon: "✍️", cat: "create", sub: "Drafts, edits, and cleaner prose" },
+  { label: "Making me angry", icon: "😤", cat: "chaotic", sub: "Devil's advocate, fully engaged" },
+  { label: "Replacing Humans", icon: "🤖", cat: "chaotic", sub: "Spoiler: it genuinely can't" },
+  { label: "Brainstorming Ideas", icon: "💡", cat: "think", sub: "100 ideas — at least 3 will be good" },
+  { label: "Resume Building", icon: "📄", cat: "career", sub: "Make it actually get read" },
+  { label: "Interview Prep", icon: "🎯", cat: "career", sub: "Mock questions and actual answers" },
+  { label: "Learning New Skills", icon: "📚", cat: "learn", sub: "Personalized curriculum, zero judgment" },
+  { label: "Explaining Concepts", icon: "🧠", cat: "learn", sub: "Like you're 5, or 50" },
+  { label: "Fixing Grammar", icon: "✏️", cat: "create", sub: "Quiet, precise corrections" },
+  { label: "Startup Ideas", icon: "🚀", cat: "think", sub: "Most won't work — one might" },
+  { label: "Project Planning", icon: "📅", cat: "work", sub: "Milestones and reality checks" },
+  { label: "Productivity Hacks", icon: "⚡", cat: "life", sub: "Systems that actually stick this time" },
+  { label: "Late-Night Overthinking", icon: "🌙", cat: "chaotic", sub: "A patient, tireless ear at 2am" },
+  { label: "Motivation", icon: "🔥", cat: "life", sub: "For when the vibes are completely off" },
+  { label: "Procrastination", icon: "😅", cat: "chaotic", sub: "Meta-solving the real problem" },
+  { label: "Studying Smarter", icon: "🎓", cat: "learn", sub: "Spaced repetition, active recall" },
+  { label: "Research Summaries", icon: "🗂️", cat: "learn", sub: "TL;DR on anything" },
+  { label: "Email Writing", icon: "📧", cat: "work", sub: "Say what you mean, send it, done" },
+  { label: "Documentation", icon: "📝", cat: "code", sub: "Docs that developers actually read" },
+  { label: "API Design", icon: "🔌", cat: "code", sub: "RESTful, clean, scalable" },
+  { label: "System Design", icon: "🏗️", cat: "code", sub: "From napkin sketch to architecture" },
+  { label: "Bug Hunting", icon: "🕵️", cat: "code", sub: "Reproduce, isolate, destroy" },
+  { label: "Code Optimization", icon: "⚙️", cat: "code", sub: "Faster, leaner, cleaner" },
+  { label: "Learning Algorithms", icon: "🧮", cat: "learn", sub: "Big O explained with kindness" },
+  { label: "Competitive Programming", icon: "🏆", cat: "code", sub: "LeetCode survival guide" },
+  { label: "Tech Twitter Posts", icon: "🐦", cat: "create", sub: "Hot takes, delivered responsibly" },
+  { label: "LinkedIn Posts", icon: "💼", cat: "create", sub: "Humble brag, fully refined" },
+  { label: "Content Creation", icon: "🎨", cat: "create", sub: "Ideas that actually land" },
+  { label: "Script Writing", icon: "🎬", cat: "create", sub: "Hooks, stories, and real dialogue" },
+  { label: "Storytelling", icon: "📖", cat: "create", sub: "Structure meets genuine feeling" },
+  { label: "Learning Languages", icon: "🌍", cat: "learn", sub: "From zero to actual conversation" },
+  { label: "Travel Planning", icon: "✈️", cat: "life", sub: "Itineraries that make sense" },
+  { label: "Fitness Plans", icon: "💪", cat: "life", sub: "Progressive, sustainable, real" },
+  { label: "Diet Suggestions", icon: "🥗", cat: "life", sub: "Real food for real goals" },
+  { label: "Daily Scheduling", icon: "⏰", cat: "work", sub: "Time-blocking that actually holds" },
+  { label: "Note Taking", icon: "🗒️", cat: "work", sub: "Organize the chaos" },
+  { label: "Meeting Summaries", icon: "📋", cat: "work", sub: "Action items, extracted fast" },
+  { label: "Idea Validation", icon: "✅", cat: "think", sub: "Steel-man your concept" },
+  { label: "Decision Making", icon: "⚖️", cat: "think", sub: "Frameworks for the tough calls" },
+  { label: "Career Advice", icon: "🧭", cat: "career", sub: "No-fluff, no motivational posters" },
+  { label: "Side Projects", icon: "🛠️", cat: "code", sub: "Ship the thing already" },
+  { label: "Automation", icon: "🤖", cat: "code", sub: "Let scripts do the grunt work" },
+  { label: "Life Advice", icon: "🌱", cat: "life", sub: "Thoughtful, never preachy" },
+  { label: "Existential Crisis", icon: "🌌", cat: "chaotic", sub: "What even is anything", special: "existential" },
+  { label: "Claude", icon: "✦", cat: "chaotic", sub: "Claude for figuring out Claude", special: "info" },
+];
+
+const cats = [
+  { key: "all", label: "all" },
+  { key: "code", label: "code" },
+  { key: "work", label: "work" },
+  { key: "create", label: "create" },
+  { key: "learn", label: "learn" },
+  { key: "think", label: "think" },
+  { key: "career", label: "career" },
+  { key: "life", label: "life" },
+  { key: "chaotic", label: "chaotic good" },
+];
+
+let activeFilter = "all";
+let searchQuery = "";
+
+const gridEl = document.getElementById("grid");
+const filtersEl = document.getElementById("filters");
+const visibleCountEl = document.getElementById("visible-count");
+const emptyEl = document.getElementById("empty");
+const totalCountEl = document.getElementById("total-count");
+
+totalCountEl.textContent = items.length;
+
+// render filter pills
+filtersEl.innerHTML = cats.map(c =>
+  `<button class="pill${c.key === 'all' ? ' active' : ''}" data-key="${c.key}">${c.label}</button>`
+).join('');
+
+filtersEl.addEventListener('click', e => {
+  const btn = e.target.closest('.pill');
+  if (!btn) return;
+  activeFilter = btn.dataset.key;
+  document.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', p.dataset.key === activeFilter));
+  updateGrid();
+});
+
+document.getElementById('search').addEventListener('input', e => {
+  searchQuery = e.target.value.toLowerCase();
+  updateGrid();
+});
+
+function updateGrid() {
+  const visible = items.filter(item => {
+    const matchesCat = activeFilter === 'all' || item.cat === activeFilter;
+    const matchesSearch = !searchQuery ||
+      item.label.toLowerCase().includes(searchQuery) ||
+      item.sub.toLowerCase().includes(searchQuery) ||
+      item.cat.toLowerCase().includes(searchQuery);
+    return matchesCat && matchesSearch;
+  });
+
+  gridEl.innerHTML = visible.map((item, i) => {
+    let cls = 'card';
+    if (item.special === 'existential') cls += ' special-existential';
+    if (item.special === 'info') cls += ' special-info';
+    return `<div class="${cls}" style="animation-delay:${Math.min(i * 20, 300)}ms" onclick="openClaude('${item.label.replace(/'/g, "\\'")}')">
+      <div class="card-icon">${item.icon}</div>
+      <div class="card-label">${item.label}</div>
+      <div class="card-sub">${item.sub}</div>
+      <div class="card-tag">${item.cat}</div>
+    </div>`;
+  }).join('');
+
+  visibleCountEl.textContent = visible.length + ' use cases' + (searchQuery || activeFilter !== 'all' ? ' shown' : '');
+  emptyEl.style.display = visible.length === 0 ? 'block' : 'none';
+  gridEl.style.display = visible.length === 0 ? 'none' : 'grid';
+}
+
+function openClaude(label) {
+  window.open(`https://claude.ai`, '_blank');
+}
+
+updateGrid();
+</script>
+</body>
+</html>
